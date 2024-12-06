@@ -142,6 +142,25 @@ class UNetWithAttention(nn.Module):
         return torch.sigmoid(self.final_conv(d1))  # 1x324x324
 
 
+
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1e-6):
+        super(DiceLoss, self).__init__()
+        self.smooth = smooth
+
+    def forward(self, inputs, targets):
+        inputs = torch.sigmoid(inputs)  # (softmax/sigmoid applied)
+        
+        inputs = inputs.view(-1)    # Flatten 
+        targets = targets.view(-1)
+
+        intersection = (inputs * targets).sum() # Compute intersection and union
+        total = inputs.sum() + targets.sum()
+
+        dice_coef = (2.0 * intersection + self.smooth) / (total + self.smooth)  # Dice coefficient and loss
+        dice_loss = 1 - dice_coef
+        return dice_loss
+
 # Instantiate the model
 model = UNetWithAttention(in_channels=4, out_channels=1)
 input_image = torch.rand((1, 4, 384, 384))  # Example input (batch_size=1, channels=4, height=384, width=384)
